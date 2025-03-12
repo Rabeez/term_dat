@@ -23,7 +23,7 @@ def main(
     """Start the TUI application with optional script execution and plot mode."""
     if plot not in ["ascii", "window"]:
         err_console.print(
-            "[bold red]Error: [/bold red]Invalid plot option. Choose 'ascii' or 'window'."
+            "[bold red]Error: [/bold red]Invalid plot option. Choose 'ascii' or 'window'.",
         )
         raise typer.Exit(code=1)
 
