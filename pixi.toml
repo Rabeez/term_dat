@@ -1,0 +1,20 @@
+[project]
+authors = ["Rabeez Riaz <ruoter123@gmail.com>"]
+channels = ["conda-forge"]
+description = "TUI application for data analysis and visualization"
+name = "term_dat"
+platforms = ["osx-arm64"]
+version = "0.1.0"
+
+[tasks]
+nvim = "nvim"
+app = "python main.py"
+test = "pytest"
+
+[dependencies]
+python = ">=3.13.2,<3.14"
+textual = ">=2.1.2,<3"
+prompt_toolkit = ">=3.0.50,<4"
+rich = ">=13.9.4,<14"
+plotext = ">=5.3.2,<6"
+pytest = ">=8.3.5,<9"
