@@ -12,7 +12,8 @@ app = "python main.py"
 test = "pytest"
 
 [dependencies]
-python = ">=3.13.2,<3.14"
+python = "3.12.*"
+typer = ">=0.15.2,<0.16"
 textual = ">=2.1.2,<3"
 prompt_toolkit = ">=3.0.50,<4"
 rich = ">=13.9.4,<14"
