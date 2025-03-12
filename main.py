@@ -2,8 +2,11 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
+from rich.console import Console
 
 from app import TUIApp
+
+err_console = Console(stderr=True)
 
 
 # TODO: use strenum here for plot options
@@ -19,7 +22,9 @@ def main(
 ) -> None:
     """Start the TUI application with optional script execution and plot mode."""
     if plot not in ["ascii", "window"]:
-        typer.echo("Invalid plot option. Choose 'ascii' or 'window'.", err=True)
+        err_console.print(
+            "[bold red]Error: [/bold red]Invalid plot option. Choose 'ascii' or 'window'."
+        )
         raise typer.Exit(code=1)
 
     tui_app = TUIApp(
