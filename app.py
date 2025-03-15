@@ -2,10 +2,17 @@ from pathlib import Path
 
 from textual import on
 from textual.app import App, ComposeResult
-from textual.containers import Grid, ScrollableContainer, VerticalGroup, VerticalScroll
+from textual.containers import (
+    Container,
+    Grid,
+    HorizontalGroup,
+    VerticalGroup,
+    VerticalScroll,
+)
 from textual.screen import Screen
 from textual.validation import ValidationResult, Validator
 from textual.widgets import (
+    Button,
     Input,
     Label,
     ListItem,
@@ -122,7 +129,7 @@ class PanelPrimary(VerticalGroup):
         yield PanelOutput(id="output-panel")
 
 
-class PanelTables(ScrollableContainer):
+class PanelTables(Container):
     BORDER_TITLE = "Tables"
 
     def compose(self) -> ComposeResult:
@@ -135,11 +142,38 @@ class PanelTables(ScrollableContainer):
                 yield Markdown("PAUL")
 
 
-class PanelPlots(VerticalScroll):
+class PanelPlots(Container):
     BORDER_TITLE = "Plots"
+    DEFAULT_CSS = """
+    .plots-menu {
+        height: 10%;
+    }
+    .plots-btn {
+        min-width: 20%;
+        background: transparent;
+        border: none;
+    }
+    .plots-btn:hover,
+    .plots-btn:focus,
+    .plots-btn:focus-within {
+        background: $background-lighten-1;
+        border: none;
+    }
+    .plot-container {
+        height: 90%;
+    }
+    """
 
     def compose(self) -> ComposeResult:
-        yield Placeholder("plots")
+        with HorizontalGroup(id="plots-menu"):
+            yield Button("<", classes="plots-btn", id="plots-menu-prev")
+            yield Button(">", classes="plots-btn", id="plots-menu-next")
+            yield Button("+", classes="plots-btn", id="plots-menu-zoom")
+        yield Placeholder("plots", id="plot-container")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        # TODO: process plot buttons
+        pass
 
 
 class ScreenMain(Screen):
