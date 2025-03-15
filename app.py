@@ -2,10 +2,19 @@ from pathlib import Path
 
 from textual import on
 from textual.app import App, ComposeResult
-from textual.containers import Grid, VerticalGroup, VerticalScroll
+from textual.containers import Grid, ScrollableContainer, VerticalGroup, VerticalScroll
 from textual.screen import Screen
 from textual.validation import ValidationResult, Validator
-from textual.widgets import Input, Label, ListItem, ListView, Placeholder
+from textual.widgets import (
+    Input,
+    Label,
+    ListItem,
+    ListView,
+    Markdown,
+    Placeholder,
+    TabbedContent,
+    TabPane,
+)
 
 
 class PanelHistory(VerticalScroll):
@@ -113,11 +122,17 @@ class PanelPrimary(VerticalGroup):
         yield PanelOutput(id="output-panel")
 
 
-class PanelTables(VerticalScroll):
+class PanelTables(ScrollableContainer):
     BORDER_TITLE = "Tables"
 
     def compose(self) -> ComposeResult:
-        yield Placeholder("tables")
+        with TabbedContent():
+            with TabPane("Leto"):
+                yield Markdown("LETO")
+            with TabPane("Jessica"):
+                yield Markdown("JESSICA")
+            with TabPane("Paul"):
+                yield Markdown("PAUL")
 
 
 class PanelPlots(VerticalScroll):
@@ -142,6 +157,12 @@ class ScreenMain(Screen):
     }
     #primary {
         row-span: 2;
+    }
+    #tables {
+        row-span: 1;
+    }
+    #plots {
+        row-span: 1;
     }
     """
 
