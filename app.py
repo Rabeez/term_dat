@@ -1,62 +1,84 @@
 from pathlib import Path
 
 from textual.app import App, ComposeResult
-from textual.containers import HorizontalScroll, VerticalScroll
+from textual.containers import Grid, VerticalGroup, VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Placeholder
 
 
-class Header(Placeholder):
+class PanelHistory(VerticalScroll):
+    BORDER_TITLE = "History"
+
+    def compose(self) -> ComposeResult:
+        yield Placeholder("History")
+
+
+class PanelInput(VerticalScroll):
+    def compose(self) -> ComposeResult:
+        yield Placeholder("input")
+
+
+class PanelOutput(VerticalScroll):
+    def compose(self) -> ComposeResult:
+        yield Placeholder("output")
+
+
+class PanelPrimary(VerticalGroup):
+    BORDER_TITLE = ""
     DEFAULT_CSS = """
-    Header {
-        height: 3;
-        dock: top;
-    }
-    """
-
-
-class Footer(Placeholder):
-    DEFAULT_CSS = """
-    Footer {
-        height: 3;
-        dock: bottom;
-    }
-    """
-
-
-class Tweet(Placeholder):
-    DEFAULT_CSS = """
-    Tweet {
-        height: 5;
-        width: 1fr;
-        border: tall $background;
-    }
-    """
-
-
-class Column(VerticalScroll):
-    DEFAULT_CSS = """
-    Column {
+    #input-section {
         height: 1fr;
-        width: 32;
-        margin: 0 2;
+        margin-bottom: 1;
+    }
+    #output-section {
+        height: 3fr;
+    }
+
+    """
+
+    def compose(self) -> ComposeResult:
+        yield PanelInput(id="input-section")
+        yield PanelOutput(id="output-section")
+
+
+class PanelTables(VerticalScroll):
+    BORDER_TITLE = "Tables"
+
+    def compose(self) -> ComposeResult:
+        yield Placeholder("tables")
+
+
+class PanelPlots(VerticalScroll):
+    BORDER_TITLE = "Plots"
+
+    def compose(self) -> ComposeResult:
+        yield Placeholder("plots")
+
+
+class ScreenMain(Screen):
+    DEFAULT_CSS = """
+    Grid {
+        grid-size: 3 2;
+        grid-columns: 1fr 2fr 1fr;
+        grid-rows: 1fr 1fr;
+    }
+    .panel {
+        border: round;
+    }
+    #history {
+        row-span: 2;
+    }
+    #primary {
+        row-span: 2;
     }
     """
 
     def compose(self) -> ComposeResult:
-        for tweet_no in range(1, 20):
-            yield Tweet(id=f"Tweet{tweet_no}")
-
-
-class TweetScreen(Screen):
-    def compose(self) -> ComposeResult:
-        yield Header(id="Header")
-        yield Footer(id="Footer")
-        with HorizontalScroll():
-            yield Column()
-            yield Column()
-            yield Column()
-            yield Column()
+        with Grid():
+            yield PanelHistory(id="history", classes="panel")
+            yield PanelPrimary(id="primary", classes="panel")
+            yield PanelTables(id="tables", classes="panel")
+            yield PanelPlots(id="plots", classes="panel")
 
 
 class TUIApp(App):
@@ -80,7 +102,7 @@ class TUIApp(App):
             self.import_script(self.script)
 
     def on_ready(self) -> None:
-        self.push_screen(TweetScreen())
+        self.push_screen(ScreenMain())
 
     def import_script(self, script: Path) -> None:
         with open(script, "r") as f:
