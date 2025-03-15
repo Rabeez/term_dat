@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from textual import on
 from textual.app import App, ComposeResult
 from textual.containers import Grid, VerticalGroup, VerticalScroll
 from textual.screen import Screen
@@ -30,41 +31,64 @@ class CommandValidator(Validator):
         return value == value[::-1]
 
 
-class CommandInput(Input):
+class PanelInput(VerticalScroll):
     DEFAULT_CSS = """
-    Input.-valid {
-        border: round $success 60%;
+    #input-widget {
+        border: round $secondary;
+        background: transparent;
     }
-    Input.-valid:focus {
-        border: round $success;
+    #input-widget.-invalid {
+        border: round $error 60%;
+    }
+    #input-widget.-invalid:focus {
+        border: round $error;
     }
     """
 
     def compose(self) -> ComposeResult:
         yield Input(
+            id="input-widget",
             placeholder="Run your analysis",
-            validate_on=["changed"],
+            validate_on=["changed", "submitted"],
+            valid_empty=False,
             validators=[
                 CommandValidator(),
             ],
         )
+        yield Label(id="input-validation-msg")
+
+    @on(Input.Changed)
+    def show_invalid_reasons(self, event: Input.Changed) -> None:
+        # Updating the UI to show the reasons why validation failed
+        assert event.validation_result is not None
+        if not event.validation_result.is_valid:
+            self.query_one("#input-validation-msg", Label).update(
+                "\n".join(event.validation_result.failure_descriptions),
+            )
+        else:
+            self.query_one("#input-validation-msg", Label).update("")
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
         # TODO: validation should return before submit event
         # validation should return parsed object for different commands
         # use command.to_str() method to render in history (or to_listitem())
         # call command.execute() method at end of this method here
+
+        assert event.validation_result is not None
+        if not event.validation_result.is_valid:
+            return
+
+        val = event.input.value.strip()
+        if len(val) == 0:
+            return
+
         output_section = self.query_ancestor("#screen").query_exactly_one("#history-list", ListView)
         output_section.append(
             ListItem(
-                Label(self.query_exactly_one(Input).value),
+                Label(val),
             ),
         )
-
-
-class PanelInput(VerticalScroll):
-    def compose(self) -> ComposeResult:
-        yield CommandInput()
+        event.input.clear()
 
 
 class PanelOutput(VerticalScroll):
@@ -75,18 +99,18 @@ class PanelOutput(VerticalScroll):
 class PanelPrimary(VerticalGroup):
     BORDER_TITLE = ""
     DEFAULT_CSS = """
-    #input-section {
+    #input-panel {
         height: 1fr;
         margin-bottom: 1;
     }
-    #output-section {
+    #output-panel {
         height: 3fr;
     }
     """
 
     def compose(self) -> ComposeResult:
-        yield PanelInput(id="input-section")
-        yield PanelOutput(id="output-section")
+        yield PanelInput(id="input-panel")
+        yield PanelOutput(id="output-panel")
 
 
 class PanelTables(VerticalScroll):
