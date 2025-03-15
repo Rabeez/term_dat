@@ -26,6 +26,11 @@ from textual.widgets import (
 
 class PanelHistory(VerticalScroll):
     BORDER_TITLE = "History"
+    DEFAULT_CSS = """
+    #history-list {
+        background: transparent;
+    }
+    """
 
     def compose(self) -> ComposeResult:
         with ListView(id="history-list"):
