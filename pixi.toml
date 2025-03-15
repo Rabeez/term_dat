@@ -8,13 +8,16 @@ version = "0.1.0"
 
 [tasks]
 nvim = "nvim"
-app = "python main.py"
+app = "textual run main.py"
+dev = "textual run --dev main.py"
+console = "textual console"
 test = "pytest"
 
 [dependencies]
 python = "3.12.*"
 typer = ">=0.15.2,<0.16"
 textual = ">=2.1.2,<3"
+textual-dev = ">=1.7.0,<2"
 prompt_toolkit = ">=3.0.50,<4"
 rich = ">=13.9.4,<14"
 plotext = ">=5.3.2,<6"
