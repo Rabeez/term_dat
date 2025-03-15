@@ -50,6 +50,10 @@ class CommandInput(Input):
         )
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
+        # TODO: validation should return before submit event
+        # validation should return parsed object for different commands
+        # use command.to_str() method to render in history (or to_listitem())
+        # call command.execute() method at end of this method here
         output_section = self.query_ancestor("#screen").query_exactly_one("#history-list", ListView)
         output_section.append(
             ListItem(
