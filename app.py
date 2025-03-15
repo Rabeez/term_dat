@@ -35,6 +35,8 @@ class PanelHistory(VerticalScroll):
     def compose(self) -> ComposeResult:
         with ListView(id="history-list"):
             for i in range(10):
+                # TODO: setup custom item component here and render it instead
+                # should have step name/keyword, output data shapa, affected table??
                 yield ListItem(
                     Label(f"{i}"),
                 )
@@ -42,6 +44,9 @@ class PanelHistory(VerticalScroll):
 
 class CommandValidator(Validator):
     def validate(self, value: str) -> ValidationResult:
+        # TODO: link this to parsing logic
+        # include 'keywords'
+        # include column names
         if self.is_palindrome(value):
             return self.success()
         else:
@@ -72,22 +77,21 @@ class PanelInput(VerticalScroll):
             placeholder="Run your analysis",
             validate_on=["changed", "submitted"],
             valid_empty=False,
-            validators=[
-                CommandValidator(),
-            ],
+            validators=[CommandValidator()],
         )
         yield Label(id="input-validation-msg")
 
     @on(Input.Changed)
     def show_invalid_reasons(self, event: Input.Changed) -> None:
         # Updating the UI to show the reasons why validation failed
+        w = self.query_one("#input-validation-msg", Label)
         assert event.validation_result is not None
         if not event.validation_result.is_valid:
-            self.query_one("#input-validation-msg", Label).update(
+            w.update(
                 "\n".join(event.validation_result.failure_descriptions),
             )
         else:
-            self.query_one("#input-validation-msg", Label).update("")
+            w.update("")
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
         # TODO: validation should return before submit event
@@ -114,6 +118,7 @@ class PanelInput(VerticalScroll):
 
 class PanelOutput(VerticalScroll):
     def compose(self) -> ComposeResult:
+        # TODO: dynamic output component based on output content??
         yield Placeholder("output", id="output-content")
 
 
@@ -154,9 +159,9 @@ class PanelPlots(Container):
         height: 10%;
     }
     .plots-btn {
-        min-width: 20%;
         background: transparent;
         border: none;
+        min-width: 20%;
     }
     .plots-btn:hover,
     .plots-btn:focus,
@@ -174,11 +179,20 @@ class PanelPlots(Container):
             yield Button("<", classes="plots-btn", id="plots-menu-prev")
             yield Button(">", classes="plots-btn", id="plots-menu-next")
             yield Button("+", classes="plots-btn", id="plots-menu-zoom")
+        # TODO: look into ContentSwitcher for this container
         yield Placeholder("plots", id="plot-container")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         # TODO: process plot buttons
-        pass
+        match event.button.id:
+            case "plots-menu-prev":
+                pass
+            case "plots-menu-prev":
+                pass
+            case "plots-menu-prev":
+                pass
+            case _:
+                raise ValueError("Unsupported button id='{event.button.id}'")
 
 
 class ScreenMain(Screen):
