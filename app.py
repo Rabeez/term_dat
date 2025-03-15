@@ -135,7 +135,7 @@ class ScreenMain(Screen):
         grid-rows: 1fr 1fr;
     }
     .panel {
-        border: round;
+        border: round $surface-lighten-3;
     }
     #history {
         row-span: 2;
