@@ -77,17 +77,12 @@ class TUIApp(App):
 
     def on_mount(self) -> None:
         if self.script:
-            self.run_script(self.script)
-        if self.plot_mode == "window":
-            self.show_plot_window()
+            self.import_script(self.script)
 
     def on_ready(self) -> None:
         self.push_screen(TweetScreen())
 
-    def run_script(self, script: Path) -> None:
+    def import_script(self, script: Path) -> None:
         with open(script, "r") as f:
             for line in f:
                 print(f"Executing: {line.strip()}")  # Process REPL logic
-
-    def show_plot_window(self) -> None:
-        print("Showing plot in native window")  # Handle external plot display logic
