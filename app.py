@@ -3,24 +3,69 @@ from pathlib import Path
 from textual.app import App, ComposeResult
 from textual.containers import Grid, VerticalGroup, VerticalScroll
 from textual.screen import Screen
-from textual.widgets import Placeholder
+from textual.validation import ValidationResult, Validator
+from textual.widgets import Input, Label, ListItem, ListView, Placeholder
 
 
 class PanelHistory(VerticalScroll):
     BORDER_TITLE = "History"
 
     def compose(self) -> ComposeResult:
-        yield Placeholder("History")
+        with ListView(id="history-list"):
+            for i in range(10):
+                yield ListItem(
+                    Label(f"{i}"),
+                )
+
+
+class CommandValidator(Validator):
+    def validate(self, value: str) -> ValidationResult:
+        if self.is_palindrome(value):
+            return self.success()
+        else:
+            return self.failure("That's not a palindrome :(")
+
+    @staticmethod
+    def is_palindrome(value: str) -> bool:
+        return value == value[::-1]
+
+
+class CommandInput(Input):
+    DEFAULT_CSS = """
+    Input.-valid {
+        border: round $success 60%;
+    }
+    Input.-valid:focus {
+        border: round $success;
+    }
+    """
+
+    def compose(self) -> ComposeResult:
+        yield Input(
+            placeholder="Run your analysis",
+            validate_on=["changed"],
+            validators=[
+                CommandValidator(),
+            ],
+        )
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        output_section = self.query_ancestor("#screen").query_exactly_one("#history-list", ListView)
+        output_section.append(
+            ListItem(
+                Label(self.query_exactly_one(Input).value),
+            ),
+        )
 
 
 class PanelInput(VerticalScroll):
     def compose(self) -> ComposeResult:
-        yield Placeholder("input")
+        yield CommandInput()
 
 
 class PanelOutput(VerticalScroll):
     def compose(self) -> ComposeResult:
-        yield Placeholder("output")
+        yield Placeholder("output", id="output-content")
 
 
 class PanelPrimary(VerticalGroup):
@@ -33,7 +78,6 @@ class PanelPrimary(VerticalGroup):
     #output-section {
         height: 3fr;
     }
-
     """
 
     def compose(self) -> ComposeResult:
@@ -74,7 +118,7 @@ class ScreenMain(Screen):
     """
 
     def compose(self) -> ComposeResult:
-        with Grid():
+        with Grid(id="screen"):
             yield PanelHistory(id="history", classes="panel")
             yield PanelPrimary(id="primary", classes="panel")
             yield PanelTables(id="tables", classes="panel")
