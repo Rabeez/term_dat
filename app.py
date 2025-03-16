@@ -101,8 +101,8 @@ class PanelInput(VerticalScroll):
         cmd = make_command(val)
         # TODO: do something if command fails??
 
-        match type(cmd):
-            case CommandLoad:
+        match cmd:
+            case CommandLoad():
                 name, table = cmd.execute()
 
                 # Append to reactive list in tables panel, and trigger reactive updates
@@ -110,6 +110,7 @@ class PanelInput(VerticalScroll):
                     "#tables",
                     PanelTables,
                 )
+                # NOTE: will overwrite older table variables if same name is used
                 tables_list.tables[name] = table
                 tables_list.mutate_reactive(PanelTables.tables)
 
