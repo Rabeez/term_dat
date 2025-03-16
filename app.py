@@ -1,4 +1,5 @@
 from parser.commands import (
+    Command,
     CommandValidator,
     make_command,
 )
@@ -13,6 +14,7 @@ from textual.containers import (
     VerticalGroup,
     VerticalScroll,
 )
+from textual.reactive import reactive
 from textual.screen import Screen
 from textual.widgets import (
     Button,
@@ -35,14 +37,12 @@ class PanelHistory(VerticalScroll):
     }
     """
 
+    history: reactive[list[Command]] = reactive([], recompose=True)
+
     def compose(self) -> ComposeResult:
         with ListView(id="history-list"):
-            for i in range(10):
-                # TODO: setup custom item component here and render it instead
-                # should have step name/keyword, output data shapa, affected table??
-                yield ListItem(
-                    Label(f"{i}"),
-                )
+            for step in self.history:
+                yield ListItem(step.view())
 
 
 class PanelInput(VerticalScroll):
@@ -80,9 +80,7 @@ class PanelInput(VerticalScroll):
             return
 
         if not event.validation_result.is_valid:
-            w.update(
-                "\n".join(event.validation_result.failure_descriptions),
-            )
+            w.update("\n".join(event.validation_result.failure_descriptions))
         else:
             w.update("")
 
@@ -101,12 +99,12 @@ class PanelInput(VerticalScroll):
         # TODO: do something if command fails??
         cmd.execute()
 
-        output_section = self.query_ancestor("#screen").query_exactly_one("#history-list", ListView)
-        output_section.append(
-            ListItem(
-                Label(cmd.view()),
-            ),
-        )
+        # Append to reactive list in history panel, and trigger reactive updates
+        history_list = self.query_ancestor("#screen").query_exactly_one("#history", PanelHistory)
+        history_list.history.append(cmd)
+        history_list.mutate_reactive(PanelHistory.history)
+
+        # Clear input box
         event.input.clear()
 
 
