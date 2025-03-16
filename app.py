@@ -1,3 +1,7 @@
+from parser.commands import (
+    Command,
+    CommandValidator,
+)
 from pathlib import Path
 
 from textual import on
@@ -9,8 +13,8 @@ from textual.containers import (
     VerticalGroup,
     VerticalScroll,
 )
+from textual.reactive import reactive
 from textual.screen import Screen
-from textual.validation import ValidationResult, Validator
 from textual.widgets import (
     Button,
     Input,
@@ -42,21 +46,6 @@ class PanelHistory(VerticalScroll):
                 )
 
 
-class CommandValidator(Validator):
-    def validate(self, value: str) -> ValidationResult:
-        # TODO: link this to parsing logic
-        # include 'keywords'
-        # include column names
-        if self.is_palindrome(value):
-            return self.success()
-        else:
-            return self.failure("That's not a palindrome :(")
-
-    @staticmethod
-    def is_palindrome(value: str) -> bool:
-        return value == value[::-1]
-
-
 class PanelInput(VerticalScroll):
     DEFAULT_CSS = """
     #input-widget {
@@ -71,6 +60,8 @@ class PanelInput(VerticalScroll):
     }
     """
 
+    command: reactive[Command | None] = reactive(None)
+
     def compose(self) -> ComposeResult:
         yield Input(
             id="input-widget",
@@ -82,10 +73,15 @@ class PanelInput(VerticalScroll):
         yield Label(id="input-validation-msg")
 
     @on(Input.Changed)
-    def show_invalid_reasons(self, event: Input.Changed) -> None:
-        # Updating the UI to show the reasons why validation failed
+    def process_validation_result(self, event: Input.Changed) -> None:
         w = self.query_one("#input-validation-msg", Label)
         assert event.validation_result is not None
+
+        # Skip error messaging for empty input
+        if event.input.value == "":
+            self.query_one("#input-validation-msg", Label).update("")
+            return
+
         if not event.validation_result.is_valid:
             w.update(
                 "\n".join(event.validation_result.failure_descriptions),
@@ -94,11 +90,6 @@ class PanelInput(VerticalScroll):
             w.update("")
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
-        # TODO: validation should return before submit event
-        # validation should return parsed object for different commands
-        # use command.to_str() method to render in history (or to_listitem())
-        # call command.execute() method at end of this method here
-
         assert event.validation_result is not None
         if not event.validation_result.is_valid:
             return
