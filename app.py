@@ -1,6 +1,6 @@
 from parser.commands import (
-    Command,
     CommandValidator,
+    make_command,
 )
 from pathlib import Path
 
@@ -13,7 +13,6 @@ from textual.containers import (
     VerticalGroup,
     VerticalScroll,
 )
-from textual.reactive import reactive
 from textual.screen import Screen
 from textual.widgets import (
     Button,
@@ -60,8 +59,6 @@ class PanelInput(VerticalScroll):
     }
     """
 
-    command: reactive[Command | None] = reactive(None)
-
     def compose(self) -> ComposeResult:
         yield Input(
             id="input-widget",
@@ -90,18 +87,24 @@ class PanelInput(VerticalScroll):
             w.update("")
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
+        # Skip processing invalid commands
         assert event.validation_result is not None
         if not event.validation_result.is_valid:
             return
 
+        # Skip processing empty commands
         val = event.input.value.strip()
         if len(val) == 0:
             return
 
+        cmd = make_command(val)
+        # TODO: do something if command fails??
+        cmd.execute()
+
         output_section = self.query_ancestor("#screen").query_exactly_one("#history-list", ListView)
         output_section.append(
             ListItem(
-                Label(val),
+                Label(cmd.view()),
             ),
         )
         event.input.clear()

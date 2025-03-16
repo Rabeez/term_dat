@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 from enum import StrEnum, auto, unique
 from pathlib import Path
-from typing import Any
+from typing import Protocol
 
+import polars as pl
 from textual.validation import ValidationResult, Validator
 
 
@@ -46,7 +47,26 @@ class CommandValidator(Validator):
         return self.success()
 
 
+class Command(Protocol):
+    def view(self) -> str: ...
+    def execute(self) -> None: ...
+
+
 @dataclass
-class Command:
-    keyword: Keyword
-    args: list[Any]
+class CommandLoad(Command):
+    path: Path
+
+    def view(self) -> str:
+        return f"LOAD {self.path.name}"
+
+    def execute(self) -> None:
+        df = pl.read_csv(self.path)
+
+
+def make_command(s: str) -> Command:
+    keyword, *rest = s.strip().split(" ")
+    keyword = Keyword[keyword.upper()]
+    match keyword:
+        case Keyword.LOAD:
+            filepath = Path(rest[0])
+            return CommandLoad(filepath)
