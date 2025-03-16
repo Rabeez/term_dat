@@ -38,7 +38,7 @@ class CommandValidator(Validator):
                     return self.failure(f"Invalid arguments for '{keyword}': {rest}")
 
                 if len(table_name) <= 0:
-                    return self.failure("Invalid table name provided")
+                    return self.failure("Table name is required")
 
                 if not filepath.exists():
                     return self.failure(f"Provided path does not exist: '{filepath}'")

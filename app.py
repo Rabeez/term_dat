@@ -1,4 +1,3 @@
-from components.dataframe import DataFrameTable
 from parser.commands import (
     Command,
     CommandLoad,
@@ -25,11 +24,12 @@ from textual.widgets import (
     Label,
     ListItem,
     ListView,
-    Markdown,
     Placeholder,
     TabbedContent,
     TabPane,
 )
+
+from components.dataframe import DataFrameTable
 
 
 class PanelHistory(VerticalScroll):
@@ -107,7 +107,8 @@ class PanelInput(VerticalScroll):
 
                 # Append to reactive list in tables panel, and trigger reactive updates
                 tables_list = self.query_ancestor("#screen").query_exactly_one(
-                    "#tables", PanelTables
+                    "#tables",
+                    PanelTables,
                 )
                 tables_list.tables[name] = table
                 tables_list.mutate_reactive(PanelTables.tables)
