@@ -5,6 +5,8 @@ from typing import Any, Protocol
 
 import polars as pl
 from textual.validation import ValidationResult, Validator
+from textual.widget import Widget
+from textual.widgets import Label
 
 
 @unique
@@ -53,7 +55,7 @@ class CommandValidator(Validator):
 
 
 class Command(Protocol):
-    def view(self) -> str: ...
+    def view(self) -> Widget: ...
     @staticmethod
     def preprocess(args: str) -> list[Any]: ...
     def execute(self) -> None: ...
@@ -64,9 +66,8 @@ class CommandLoad(Command):
     table_name: str
     path: Path
 
-    def view(self) -> str:
-        # TODO: this should return a widget that can be put inside a ListItem
-        return f'LOAD {self.table_name}="{self.path.name}"'
+    def view(self) -> Widget:
+        return Label(f'LOAD {self.table_name}="{self.path.name}"')
 
     @staticmethod
     def preprocess(args: str) -> list[Any]:
