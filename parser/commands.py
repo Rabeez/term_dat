@@ -58,7 +58,7 @@ class Command(Protocol):
     def view(self) -> Widget: ...
     @staticmethod
     def preprocess(args: str) -> list[Any]: ...
-    def execute(self) -> None: ...
+    def execute(self) -> list[Any]: ...
 
 
 @dataclass
@@ -80,9 +80,13 @@ class CommandLoad(Command):
             Path(filepath),
         ]
 
-    def execute(self) -> None:
+    def execute(self) -> list[Any]:
         # TODO: need to update global app state here
-        _ = pl.read_csv(self.path)
+        table = pl.read_csv(self.path)
+        return [
+            self.table_name,
+            table,
+        ]
 
 
 def make_command(s: str) -> Command:

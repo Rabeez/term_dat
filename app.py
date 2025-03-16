@@ -1,10 +1,13 @@
+from components.dataframe import DataFrameTable
 from parser.commands import (
     Command,
+    CommandLoad,
     CommandValidator,
     make_command,
 )
 from pathlib import Path
 
+import polars as pl
 from textual import on
 from textual.app import App, ComposeResult
 from textual.containers import (
@@ -97,12 +100,22 @@ class PanelInput(VerticalScroll):
 
         cmd = make_command(val)
         # TODO: do something if command fails??
-        cmd.execute()
+
+        match type(cmd):
+            case CommandLoad:
+                name, table = cmd.execute()
+
+                # Append to reactive list in tables panel, and trigger reactive updates
+                tables_list = self.query_ancestor("#screen").query_exactly_one(
+                    "#tables", PanelTables
+                )
+                tables_list.tables[name] = table
+                tables_list.mutate_reactive(PanelTables.tables)
 
         # Append to reactive list in history panel, and trigger reactive updates
-        history_list = self.query_ancestor("#screen").query_exactly_one("#history", PanelHistory)
-        history_list.history.append(cmd)
-        history_list.mutate_reactive(PanelHistory.history)
+        tables_list = self.query_ancestor("#screen").query_exactly_one("#history", PanelHistory)
+        tables_list.history.append(cmd)
+        tables_list.mutate_reactive(PanelHistory.history)
 
         # Clear input box
         event.input.clear()
@@ -134,14 +147,13 @@ class PanelPrimary(VerticalGroup):
 class PanelTables(Container):
     BORDER_TITLE = "Tables"
 
+    tables: reactive[dict[str, pl.DataFrame]] = reactive({}, recompose=True)
+
     def compose(self) -> ComposeResult:
         with TabbedContent():
-            with TabPane("Leto"):
-                yield Markdown("LETO")
-            with TabPane("Jessica"):
-                yield Markdown("JESSICA")
-            with TabPane("Paul"):
-                yield Markdown("PAUL")
+            for name, table in self.tables.items():
+                with TabPane(name):
+                    yield DataFrameTable().add_df(table)
 
 
 class PanelPlots(Container):
