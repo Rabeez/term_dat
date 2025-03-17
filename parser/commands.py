@@ -32,6 +32,10 @@ class CommandValidator(Validator):
         except KeyError:
             return self.failure(f"Invalid keyword: '{keyword}'")
 
+        # TODO: improve validation logic by passing current app state
+        # -> to validate table names
+        # -> to validate column names (and types?)
+
         match keyword:
             case Keyword.LOAD:
                 try:
@@ -55,12 +59,13 @@ class CommandValidator(Validator):
             case Keyword.PLOT:
                 try:
                     plot_kind, table_name, *args = CommandLoad.preprocess(rest)
-                    # TODO: do proper PLOT parsing to get errors
-                    # plot kind check
-                    # table name check??
-                    # table columns check?
                 except ValueError:
                     return self.failure(f"Invalid arguments for '{keyword}': {rest}")
+
+                try:
+                    plot_kind = PlotKind[plot_kind.upper()]
+                except KeyError:
+                    return self.failure(f"Invalid PlotKind: '{plot_kind}'")
 
         return self.success()
 
@@ -100,6 +105,12 @@ class CommandLoad(Command):
         )
 
 
+@unique
+class PlotKind(StrEnum):
+    SCATTER = auto()
+    LINE = auto()
+
+
 @dataclass
 class CommandPlot(Command):
     kind: str
@@ -122,9 +133,17 @@ class CommandPlot(Command):
             col_y,
         ]
 
-    def execute(self, x_vals: list[Any], y_vals: list[Any]) -> PlotextPlot:
+    def execute(self, data: pl.DataFrame) -> PlotextPlot:
+        x_vals = data.select(self.col_x).to_series().to_list()
+        y_vals = data.select(self.col_y).to_series().to_list()
+
         newplot = PlotextPlot()
-        newplot.plt.plot(x_vals, y_vals)
+        match self.kind:
+            case PlotKind.SCATTER:
+                newplot.plt.scatter(x_vals, y_vals)
+            case PlotKind.LINE:
+                newplot.plt.plot(x_vals, y_vals)
+
         return newplot
 
 

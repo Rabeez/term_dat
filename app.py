@@ -123,10 +123,7 @@ class PanelInput(VerticalScroll):
                     PanelTables,
                 )
                 data = tables_list.tables[cmd.table_name]
-                x_vals = data.select(cmd.col_x).to_series().to_list()
-                y_vals = data.select(cmd.col_y).to_series().to_list()
-
-                newplot = cmd.execute(x_vals, y_vals)
+                newplot = cmd.execute(data)
 
                 # Append to reactive list in history panel, and trigger reactive updates
                 plots_list = self.query_ancestor("#screen").query_exactly_one("#plots", PanelPlots)
@@ -134,8 +131,8 @@ class PanelInput(VerticalScroll):
                 newplot.id = f"plot_idx_{new_plot_idx}"
                 plots_list.plots.append(newplot)
                 plots_list.mutate_reactive(PanelPlots.plots)
-                if plots_list.visible_plot_idx is None:
-                    plots_list.visible_plot_idx = new_plot_idx
+                # Always show the latest plot
+                plots_list.visible_plot_idx = new_plot_idx
 
         # Append to reactive list in history panel, and trigger reactive updates
         tables_list = self.query_ancestor("#screen").query_exactly_one("#history", PanelHistory)
@@ -208,9 +205,10 @@ class PanelPlots(Container):
 
     def compose(self) -> ComposeResult:
         with HorizontalGroup(id="plots-menu"):
-            yield Button("<", classes="plots-btn", id="plots-menu-prev")
-            yield Button(">", classes="plots-btn", id="plots-menu-next")
-            yield Button("+", classes="plots-btn", id="plots-menu-zoom")
+            menu_inactive = self.visible_plot_idx is None
+            yield Button("<", classes="plots-btn", id="plots-menu-prev", disabled=menu_inactive)
+            yield Button(">", classes="plots-btn", id="plots-menu-next", disabled=menu_inactive)
+            yield Button("+", classes="plots-btn", id="plots-menu-zoom", disabled=menu_inactive)
         # TODO: look into ContentSwitcher for this container
         with ContentSwitcher(
             initial=f"plot_idx_{self.visible_plot_idx}"
@@ -226,14 +224,14 @@ class PanelPlots(Container):
                 if self.visible_plot_idx is None:
                     return
                 self.visible_plot_idx = max(self.visible_plot_idx - 1, 0)
-            case "plots-menu-prev":
+            case "plots-menu-next":
                 if self.visible_plot_idx is None:
                     return
                 self.visible_plot_idx = min(self.visible_plot_idx + 1, len(self.plots) - 1)
             case "plots-menu-zoom":
                 pass
             case _:
-                raise ValueError("Unsupported button id='{event.button.id}'")
+                raise ValueError(f"Unsupported button id='{event.button.id}'")
 
 
 class ScreenMain(Screen):
