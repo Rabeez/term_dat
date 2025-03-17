@@ -7,11 +7,13 @@ import polars as pl
 from textual.validation import ValidationResult, Validator
 from textual.widget import Widget
 from textual.widgets import Label
+from textual_plotext import PlotextPlot
 
 
 @unique
 class Keyword(StrEnum):
     LOAD = auto()
+    PLOT = auto()
 
 
 class CommandValidator(Validator):
@@ -50,6 +52,15 @@ class CommandValidator(Validator):
                     return self.failure(
                         f"Can only load CSV files, you provided a '{filepath.suffix}' file",
                     )
+            case Keyword.PLOT:
+                try:
+                    plot_kind, table_name, *args = CommandLoad.preprocess(rest)
+                    # TODO: do proper PLOT parsing to get errors
+                    # plot kind check
+                    # table name check??
+                    # table columns check?
+                except ValueError:
+                    return self.failure(f"Invalid arguments for '{keyword}': {rest}")
 
         return self.success()
 
@@ -58,7 +69,7 @@ class Command(Protocol):
     def view(self) -> Widget: ...
     @staticmethod
     def preprocess(args: str) -> list[Any]: ...
-    def execute(self) -> list[Any]: ...
+    def execute(self, *args: Any, **kwargs: Any) -> Any: ...  # noqa: ANN401
 
 
 @dataclass
@@ -80,13 +91,41 @@ class CommandLoad(Command):
             Path(filepath),
         ]
 
-    def execute(self) -> list[Any]:
+    def execute(self) -> tuple[str, pl.DataFrame]:
         # TODO: need to update global app state here
         table = pl.read_csv(self.path)
-        return [
+        return (
             self.table_name,
             table,
+        )
+
+
+@dataclass
+class CommandPlot(Command):
+    kind: str
+    table_name: str
+    col_x: str
+    col_y: str
+
+    def view(self) -> Widget:
+        return Label(f"PLOT {self.kind} {self.table_name}")
+
+    @staticmethod
+    def preprocess(args: str) -> list[Any]:
+        plot_kind, rest = args.split(" ", 1)
+        table_name, rest = rest.split(" ", 1)
+        col_x, col_y = rest.split(" ", 1)
+        return [
+            plot_kind,
+            table_name,
+            col_x,
+            col_y,
         ]
+
+    def execute(self, x_vals: list[Any], y_vals: list[Any]) -> PlotextPlot:
+        newplot = PlotextPlot()
+        newplot.plt.plot(x_vals, y_vals)
+        return newplot
 
 
 def make_command(s: str) -> Command:
@@ -96,3 +135,6 @@ def make_command(s: str) -> Command:
         case Keyword.LOAD:
             table_name, filepath = CommandLoad.preprocess(rest)
             return CommandLoad(table_name, filepath)
+        case Keyword.PLOT:
+            plot_kind, table_name, col_x, col_y = CommandPlot.preprocess(rest)
+            return CommandPlot(plot_kind, table_name, col_x, col_y)

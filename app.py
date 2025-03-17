@@ -1,6 +1,8 @@
+from textual_plotext import PlotextPlot
 from parser.commands import (
     Command,
     CommandLoad,
+    CommandPlot,
     CommandValidator,
     make_command,
 )
@@ -20,6 +22,7 @@ from textual.reactive import reactive
 from textual.screen import Screen
 from textual.widgets import (
     Button,
+    ContentSwitcher,
     Input,
     Label,
     ListItem,
@@ -113,6 +116,26 @@ class PanelInput(VerticalScroll):
                 # NOTE: will overwrite older table variables if same name is used
                 tables_list.tables[name] = table
                 tables_list.mutate_reactive(PanelTables.tables)
+            case CommandPlot():
+                # Grab relevant dataframe cols etc
+                tables_list = self.query_ancestor("#screen").query_exactly_one(
+                    "#tables",
+                    PanelTables,
+                )
+                data = tables_list.tables[cmd.table_name]
+                x_vals = data.select(cmd.col_x).to_series().to_list()
+                y_vals = data.select(cmd.col_y).to_series().to_list()
+
+                newplot = cmd.execute(x_vals, y_vals)
+
+                # Append to reactive list in history panel, and trigger reactive updates
+                plots_list = self.query_ancestor("#screen").query_exactly_one("#plots", PanelPlots)
+                new_plot_idx = len(plots_list.plots)
+                newplot.id = f"plot_idx_{new_plot_idx}"
+                plots_list.plots.append(newplot)
+                plots_list.mutate_reactive(PanelPlots.plots)
+                if plots_list.visible_plot_idx is None:
+                    plots_list.visible_plot_idx = new_plot_idx
 
         # Append to reactive list in history panel, and trigger reactive updates
         tables_list = self.query_ancestor("#screen").query_exactly_one("#history", PanelHistory)
@@ -180,22 +203,34 @@ class PanelPlots(Container):
     }
     """
 
+    plots: reactive[list[PlotextPlot]] = reactive([], recompose=True)
+    visible_plot_idx: reactive[int | None] = reactive(None, recompose=True)
+
     def compose(self) -> ComposeResult:
         with HorizontalGroup(id="plots-menu"):
             yield Button("<", classes="plots-btn", id="plots-menu-prev")
             yield Button(">", classes="plots-btn", id="plots-menu-next")
             yield Button("+", classes="plots-btn", id="plots-menu-zoom")
         # TODO: look into ContentSwitcher for this container
-        yield Placeholder("plots", id="plot-container")
+        with ContentSwitcher(
+            initial=f"plot_idx_{self.visible_plot_idx}"
+            if self.visible_plot_idx is not None
+            else None,
+        ):
+            yield from self.plots
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         # TODO: process plot buttons
         match event.button.id:
             case "plots-menu-prev":
-                pass
+                if self.visible_plot_idx is None:
+                    return
+                self.visible_plot_idx = max(self.visible_plot_idx - 1, 0)
             case "plots-menu-prev":
-                pass
-            case "plots-menu-prev":
+                if self.visible_plot_idx is None:
+                    return
+                self.visible_plot_idx = min(self.visible_plot_idx + 1, len(self.plots) - 1)
+            case "plots-menu-zoom":
                 pass
             case _:
                 raise ValueError("Unsupported button id='{event.button.id}'")

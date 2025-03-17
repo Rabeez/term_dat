@@ -59,6 +59,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/shellingham-1.5.4-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/textual-2.1.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/textual-dev-1.7.0-pyhd8ed1ab_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/textual-plotext-1.0.1-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/textual-serve-1.1.1-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/tk-8.6.13-h5083fa2_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.2.1-pyhd8ed1ab_1.conda
@@ -519,8 +520,6 @@ packages:
   - python_abi 3.12.* *_cp312
   constrains:
   - __osx >=11.0
-  arch: arm64
-  platform: osx
   license: MIT
   license_family: MIT
   size: 23270434
@@ -680,6 +679,17 @@ packages:
   license_family: MIT
   size: 28189
   timestamp: 1736609164401
+- conda: https://conda.anaconda.org/conda-forge/noarch/textual-plotext-1.0.1-pyhd8ed1ab_1.conda
+  sha256: cba8986f82052923e1e857a2ce91712189f6d6564547dfb3771a7ae3d1f61ee9
+  md5: 96b4ba1d86092f546cbd217350ef3bb3
+  depends:
+  - plotext >=5.2.8,<6.0.0
+  - python >=3.9,<4.0.0
+  - textual >=0.86.2
+  license: MIT
+  license_family: MIT
+  size: 20304
+  timestamp: 1735071100022
 - conda: https://conda.anaconda.org/conda-forge/noarch/textual-serve-1.1.1-pyhd8ed1ab_1.conda
   sha256: 0bcbabd15b16c4fdfcc46f28da3f4efe5f49bb8fd6376755d13eaf36926ca422
   md5: 6e5bf3566b87509e4d0e85119e85cca9
