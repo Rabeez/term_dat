@@ -71,7 +71,7 @@ class CommandValidator(Validator):
 
 
 class Command(Protocol):
-    def view(self) -> Widget: ...
+    def as_widget(self) -> Widget: ...
     @staticmethod
     def preprocess(args: str) -> list[Any]: ...
     def execute(self, *args: Any, **kwargs: Any) -> Any: ...  # noqa: ANN401
@@ -82,7 +82,7 @@ class CommandLoad(Command):
     table_name: str
     path: Path
 
-    def view(self) -> Widget:
+    def as_widget(self) -> Widget:
         return Label(f'LOAD {self.table_name}="{self.path.name}"')
 
     @staticmethod
@@ -118,7 +118,7 @@ class CommandPlot(Command):
     col_x: str
     col_y: str
 
-    def view(self) -> Widget:
+    def as_widget(self) -> Widget:
         return Label(f"PLOT {self.kind} {self.table_name}")
 
     @staticmethod

@@ -1,4 +1,4 @@
-from textual_plotext import PlotextPlot
+import time
 from parser.commands import (
     Command,
     CommandLoad,
@@ -9,6 +9,8 @@ from parser.commands import (
 from pathlib import Path
 
 import polars as pl
+
+# from rich.markdown import Markdown
 from textual import on
 from textual.app import App, ComposeResult
 from textual.containers import (
@@ -27,10 +29,12 @@ from textual.widgets import (
     Label,
     ListItem,
     ListView,
-    Placeholder,
+    Markdown,
+    RichLog,
     TabbedContent,
     TabPane,
 )
+from textual_plotext import PlotextPlot
 
 from components.dataframe import DataFrameTable
 
@@ -48,7 +52,7 @@ class PanelHistory(VerticalScroll):
     def compose(self) -> ComposeResult:
         with ListView(id="history-list"):
             for step in self.history:
-                yield ListItem(step.view())
+                yield ListItem(step.as_widget())
 
 
 class PanelInput(VerticalScroll):
@@ -104,6 +108,7 @@ class PanelInput(VerticalScroll):
         cmd = make_command(val)
         # TODO: do something if command fails??
 
+        log_msg = None
         match cmd:
             case CommandLoad():
                 name, table = cmd.execute()
@@ -116,6 +121,12 @@ class PanelInput(VerticalScroll):
                 # NOTE: will overwrite older table variables if same name is used
                 tables_list.tables[name] = table
                 tables_list.mutate_reactive(PanelTables.tables)
+
+                log_msg = (
+                    f"**{time.strftime('%Y-%m-%d %H:%M:%S')}**\n\n"
+                    + f"`{val}`\n\n"
+                    + f"Created new dataframe of shape={table.shape}"
+                )
             case CommandPlot():
                 # Grab relevant dataframe cols etc
                 tables_list = self.query_ancestor("#screen").query_exactly_one(
@@ -134,36 +145,56 @@ class PanelInput(VerticalScroll):
                 # Always show the latest plot
                 plots_list.visible_plot_idx = new_plot_idx
 
+                log_msg = (
+                    f"**{time.strftime('%Y-%m-%d %H:%M:%S')}**\n\n"
+                    + f"`{val}`\n\n"
+                    + f"Created new plot at index {new_plot_idx}"
+                )
+
         # Append to reactive list in history panel, and trigger reactive updates
         tables_list = self.query_ancestor("#screen").query_exactly_one("#history", PanelHistory)
         tables_list.history.append(cmd)
         tables_list.mutate_reactive(PanelHistory.history)
 
+        # Append to logs
+        primary_panel = self.query_ancestor("#screen").query_exactly_one("#primary", PanelPrimary)
+        primary_panel.logs.append(Markdown(log_msg, classes="log-msg"))
+        primary_panel.mutate_reactive(PanelPrimary.logs)
+        # TODO: scroll_end doesnt work
+        primary_panel.query_exactly_one("#logs-content", VerticalScroll).scroll_end(
+            animate=True,
+            immediate=True,
+        )
+
         # Clear input box
         event.input.clear()
 
 
-class PanelOutput(VerticalScroll):
-    def compose(self) -> ComposeResult:
-        # TODO: dynamic output component based on output content??
-        yield Placeholder("output", id="output-content")
-
-
 class PanelPrimary(VerticalGroup):
-    BORDER_TITLE = ""
     DEFAULT_CSS = """
     #input-panel {
         height: 1fr;
         margin-bottom: 1;
     }
-    #output-panel {
+    #logs-content {
         height: 3fr;
+        background: transparent;
+        border: round $surface-lighten-3;
+    }
+    .log-msg {
+        background: transparent;
+        border-bottom: $surface-lighten-1;
     }
     """
 
+    logs: reactive[list[Markdown]] = reactive([], recompose=True)
+
     def compose(self) -> ComposeResult:
         yield PanelInput(id="input-panel")
-        yield PanelOutput(id="output-panel")
+        log_container = VerticalScroll(id="logs-content")
+        log_container.border_title = "Logs"
+        with log_container:
+            yield from self.logs
 
 
 class PanelTables(Container):
@@ -172,7 +203,7 @@ class PanelTables(Container):
     tables: reactive[dict[str, pl.DataFrame]] = reactive({}, recompose=True)
 
     def compose(self) -> ComposeResult:
-        with TabbedContent():
+        with TabbedContent(disabled=len(self.tables) == 0):
             for name, table in self.tables.items():
                 with TabPane(name):
                     yield DataFrameTable().add_df(table)
@@ -249,6 +280,7 @@ class ScreenMain(Screen):
     }
     #primary {
         row-span: 2;
+        border: none;
     }
     #tables {
         row-span: 1;
