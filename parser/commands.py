@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from enum import StrEnum, auto, unique
 from pathlib import Path
+import time
 from typing import Any, Protocol
 
 import polars as pl
@@ -71,7 +72,12 @@ class CommandValidator(Validator):
 
 
 class Command(Protocol):
+    raw: str
+
     def as_widget(self) -> Widget: ...
+    def as_log(self, msg: str) -> str:
+        return f"**{time.strftime('%Y-%m-%d %H:%M:%S')}**\n\n" + f"`{self.raw}`\n\n" + msg
+
     @staticmethod
     def preprocess(args: str) -> list[Any]: ...
     def execute(self, *args: Any, **kwargs: Any) -> Any: ...  # noqa: ANN401
@@ -79,6 +85,7 @@ class Command(Protocol):
 
 @dataclass
 class CommandLoad(Command):
+    raw: str
     table_name: str
     path: Path
 
@@ -113,6 +120,7 @@ class PlotKind(StrEnum):
 
 @dataclass
 class CommandPlot(Command):
+    raw: str
     kind: str
     table_name: str
     col_x: str
@@ -153,7 +161,7 @@ def make_command(s: str) -> Command:
     match keyword:
         case Keyword.LOAD:
             table_name, filepath = CommandLoad.preprocess(rest)
-            return CommandLoad(table_name, filepath)
+            return CommandLoad(s, table_name, filepath)
         case Keyword.PLOT:
             plot_kind, table_name, col_x, col_y = CommandPlot.preprocess(rest)
-            return CommandPlot(plot_kind, table_name, col_x, col_y)
+            return CommandPlot(s, plot_kind, table_name, col_x, col_y)

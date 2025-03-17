@@ -1,4 +1,3 @@
-import time
 from parser.commands import (
     Command,
     CommandLoad,
@@ -9,8 +8,6 @@ from parser.commands import (
 from pathlib import Path
 
 import polars as pl
-
-# from rich.markdown import Markdown
 from textual import on
 from textual.app import App, ComposeResult
 from textual.containers import (
@@ -121,11 +118,7 @@ class PanelInput(VerticalScroll):
                 tables_list.tables[name] = table
                 tables_list.mutate_reactive(PanelTables.tables)
 
-                log_msg = (
-                    f"**{time.strftime('%Y-%m-%d %H:%M:%S')}**\n\n"
-                    + f"`{val}`\n\n"
-                    + f"Created new dataframe of shape={table.shape}"
-                )
+                log_msg = cmd.as_log(f"Created new dataframe of shape={table.shape}")
             case CommandPlot():
                 # Grab relevant dataframe cols etc
                 tables_list = self.query_ancestor("#screen").query_exactly_one(
@@ -144,11 +137,7 @@ class PanelInput(VerticalScroll):
                 # Always show the latest plot
                 plots_list.visible_plot_idx = new_plot_idx
 
-                log_msg = (
-                    f"**{time.strftime('%Y-%m-%d %H:%M:%S')}**\n\n"
-                    + f"`{val}`\n\n"
-                    + f"Created new plot at index {new_plot_idx}"
-                )
+                log_msg = cmd.as_log(f"Created new plot at index {new_plot_idx}")
 
         # Append to reactive list in history panel, and trigger reactive updates
         tables_list = self.query_ancestor("#screen").query_exactly_one("#history", PanelHistory)
