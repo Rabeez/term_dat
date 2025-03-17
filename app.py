@@ -30,7 +30,6 @@ from textual.widgets import (
     ListItem,
     ListView,
     Markdown,
-    RichLog,
     TabbedContent,
     TabPane,
 )
@@ -160,11 +159,6 @@ class PanelInput(VerticalScroll):
         primary_panel = self.query_ancestor("#screen").query_exactly_one("#primary", PanelPrimary)
         primary_panel.logs.append(Markdown(log_msg, classes="log-msg"))
         primary_panel.mutate_reactive(PanelPrimary.logs)
-        # TODO: scroll_end doesnt work
-        primary_panel.query_exactly_one("#logs-content", VerticalScroll).scroll_end(
-            animate=True,
-            immediate=True,
-        )
 
         # Clear input box
         event.input.clear()
@@ -194,7 +188,8 @@ class PanelPrimary(VerticalGroup):
         log_container = VerticalScroll(id="logs-content")
         log_container.border_title = "Logs"
         with log_container:
-            yield from self.logs
+            # Display logs, latest on top
+            yield from reversed(self.logs)
 
 
 class PanelTables(Container):
@@ -236,11 +231,36 @@ class PanelPlots(Container):
 
     def compose(self) -> ComposeResult:
         with HorizontalGroup(id="plots-menu"):
-            menu_inactive = self.visible_plot_idx is None
-            yield Button("<", classes="plots-btn", id="plots-menu-prev", disabled=menu_inactive)
-            yield Button(">", classes="plots-btn", id="plots-menu-next", disabled=menu_inactive)
-            yield Button("+", classes="plots-btn", id="plots-menu-zoom", disabled=menu_inactive)
-        # TODO: look into ContentSwitcher for this container
+            yield Button(
+                "󰒮",
+                classes="plots-btn",
+                id="plots-menu-prev",
+                disabled=(
+                    (self.visible_plot_idx is None)
+                    or (self.visible_plot_idx is not None and self.visible_plot_idx == 0)
+                ),
+            )
+            yield Button(
+                "󰒭",
+                classes="plots-btn",
+                id="plots-menu-next",
+                disabled=(
+                    (self.visible_plot_idx is None)
+                    or (
+                        self.visible_plot_idx is not None
+                        and self.visible_plot_idx == len(self.plots) - 1
+                    )
+                ),
+            )
+            yield Button(
+                "",
+                classes="plots-btn",
+                id="plots-menu-zoom",
+                disabled=(self.visible_plot_idx is None),
+            )
+            if self.visible_plot_idx is not None:
+                yield Label(f"Plot {self.visible_plot_idx}")
+
         with ContentSwitcher(
             initial=f"plot_idx_{self.visible_plot_idx}"
             if self.visible_plot_idx is not None
