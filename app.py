@@ -33,6 +33,7 @@ from textual.widgets import (
 from textual_plotext import PlotextPlot
 
 from components.dataframe import DataFrameTable
+from components.modal import ModalOverlay
 
 
 class PanelHistory(VerticalScroll):
@@ -271,7 +272,13 @@ class PanelPlots(Container):
                     return
                 self.visible_plot_idx = min(self.visible_plot_idx + 1, len(self.plots) - 1)
             case "plots-menu-zoom":
-                pass
+                assert self.visible_plot_idx is not None
+                self.app.push_screen(
+                    ModalOverlay(
+                        Label(f"Plot {self.visible_plot_idx}"),
+                        self.plots[self.visible_plot_idx],
+                    ),
+                )
             case _:
                 raise ValueError(f"Unsupported button id='{event.button.id}'")
 
