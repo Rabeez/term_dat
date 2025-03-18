@@ -104,8 +104,8 @@ class CommandLoad(Command):
         ]
 
     def execute(self) -> tuple[str, pl.DataFrame]:
-        # TODO: need to update global app state here
         table = pl.read_csv(self.path)
+        # TODO: clean column names here, no spaces
         return (
             self.table_name,
             table,

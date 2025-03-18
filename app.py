@@ -258,7 +258,6 @@ class PanelPlots(Container):
             yield from self.plots
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        # TODO: process plot buttons
         match event.button.id:
             case "plots-menu-prev":
                 if self.visible_plot_idx is None:
