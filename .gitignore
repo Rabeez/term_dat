@@ -3,3 +3,5 @@
 *.egg-info
 __pycache__/
 data/
+devnotes.md
+scratch/
