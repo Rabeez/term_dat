@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from enum import StrEnum, auto, unique
-from components.plot import Plot
 from parser.base import Command
 from pathlib import Path
 from typing import Any
@@ -10,6 +9,8 @@ from textual.validation import ValidationResult, Validator
 from textual.widget import Widget
 from textual.widgets import Label
 from textual_plotext import PlotextPlot
+
+from components.plot import Plot
 
 
 @unique
