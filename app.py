@@ -266,9 +266,9 @@ class PanelPlots(Container):
             return
         match event.button.id:
             case "plots-menu-prev":
-                self.visible_plot_idx = max(self.visible_plot_idx - 1, 0)
+                self.visible_plot_idx -= 1
             case "plots-menu-next":
-                self.visible_plot_idx = min(self.visible_plot_idx + 1, len(self.plots) - 1)
+                self.visible_plot_idx += 1
             case "plots-menu-zoom":
                 self.app.push_screen(
                     ModalOverlay(
