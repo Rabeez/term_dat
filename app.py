@@ -30,10 +30,10 @@ from textual.widgets import (
     TabbedContent,
     TabPane,
 )
-from textual_plotext import PlotextPlot
 
 from components.dataframe import DataFrameTable
 from components.modal import ModalOverlay
+from components.plot import Plot
 
 
 class PanelHistory(VerticalScroll):
@@ -132,7 +132,7 @@ class PanelInput(VerticalScroll):
                 # Append to reactive list in history panel, and trigger reactive updates
                 plots_list = self.query_ancestor("#screen").query_exactly_one("#plots", PanelPlots)
                 new_plot_idx = len(plots_list.plots)
-                newplot.id = f"plot_idx_{new_plot_idx}"
+                newplot.plot.id = f"plot_idx_{new_plot_idx}"
                 plots_list.plots.append(newplot)
                 plots_list.mutate_reactive(PanelPlots.plots)
                 # Always show the latest plot
@@ -218,7 +218,7 @@ class PanelPlots(Container):
     }
     """
 
-    plots: reactive[list[PlotextPlot]] = reactive([], recompose=True)
+    plots: reactive[list[Plot]] = reactive([], recompose=True)
     visible_plot_idx: reactive[int | None] = reactive(None, recompose=True)
 
     def compose(self) -> ComposeResult:
@@ -253,12 +253,13 @@ class PanelPlots(Container):
             if self.visible_plot_idx is not None:
                 yield Label(f"Plot {self.visible_plot_idx}")
 
+        # BUG: the xtick labels are cut off
         with ContentSwitcher(
             initial=f"plot_idx_{self.visible_plot_idx}"
             if self.visible_plot_idx is not None
             else None,
         ):
-            yield from self.plots
+            yield from (p.plot for p in self.plots)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         # TODO: add navigation/zoom to logs
@@ -270,10 +271,21 @@ class PanelPlots(Container):
             case "plots-menu-next":
                 self.visible_plot_idx += 1
             case "plots-menu-zoom":
+                current_plot = self.plots[self.visible_plot_idx]
+                # Recreate plot object to make duplicate
+                tables_list = self.query_ancestor("#screen").query_exactly_one(
+                    "#tables",
+                    PanelTables,
+                )
+                assert isinstance(current_plot.cmd, CommandPlot)
+                data = tables_list.tables[current_plot.cmd.table_name]
+                newplot = current_plot.cmd.execute(data)
+                newplot.plot.id = "modal_plot_temp"
+
                 self.app.push_screen(
                     ModalOverlay(
                         Label(f"Plot {self.visible_plot_idx}"),
-                        self.plots[self.visible_plot_idx],
+                        newplot.plot,
                     ),
                 )
             case _:

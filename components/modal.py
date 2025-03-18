@@ -12,8 +12,8 @@ class ModalOverlay(Screen):
         background: $background 85%;
     }
     #overlay {
-        width: 80%;
-        height: 80%;
+        width: 90%;
+        height: 90%;
         border: round $surface-lighten-3;
     }
     """

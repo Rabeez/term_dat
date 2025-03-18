@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 from enum import StrEnum, auto, unique
+from components.plot import Plot
+from parser.base import Command
 from pathlib import Path
-import time
-from typing import Any, Protocol
+from typing import Any
 
 import polars as pl
 from textual.validation import ValidationResult, Validator
@@ -71,18 +72,6 @@ class CommandValidator(Validator):
         return self.success()
 
 
-class Command(Protocol):
-    raw: str
-
-    def as_widget(self) -> Widget: ...
-    def as_log(self, msg: str) -> str:
-        return f"**{time.strftime('%Y-%m-%d %H:%M:%S')}**\n\n" + f"`{self.raw}`\n\n" + msg
-
-    @staticmethod
-    def preprocess(args: str) -> list[Any]: ...
-    def execute(self, *args: Any, **kwargs: Any) -> Any: ...  # noqa: ANN401
-
-
 @dataclass
 class CommandLoad(Command):
     raw: str
@@ -141,7 +130,7 @@ class CommandPlot(Command):
             col_y,
         ]
 
-    def execute(self, data: pl.DataFrame) -> PlotextPlot:
+    def execute(self, data: pl.DataFrame) -> Plot:
         x_vals = data.select(self.col_x).to_series().to_list()
         y_vals = data.select(self.col_y).to_series().to_list()
 
@@ -152,7 +141,7 @@ class CommandPlot(Command):
             case PlotKind.LINE:
                 newplot.plt.plot(x_vals, y_vals)
 
-        return newplot
+        return Plot(newplot, self)
 
 
 def make_command(s: str) -> Command:
