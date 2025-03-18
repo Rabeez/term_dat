@@ -149,6 +149,8 @@ class PanelInput(VerticalScroll):
         primary_panel = self.query_ancestor("#screen").query_exactly_one("#primary", PanelPrimary)
         primary_panel.logs.append(Markdown(log_msg, classes="log-msg"))
         primary_panel.mutate_reactive(PanelPrimary.logs)
+        # TODO: maybe use message queue to add to logs?
+        # AND also for plots, tables etc?
 
         # Clear input box
         event.input.clear()
