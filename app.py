@@ -187,6 +187,8 @@ class PanelTables(Container):
     tables: reactive[dict[str, pl.DataFrame]] = reactive({}, recompose=True)
 
     def compose(self) -> ComposeResult:
+        # TODO: add 'zoom' button to open datatable in float view
+        # TODO: add zoom to logs
         with TabbedContent(disabled=len(self.tables) == 0):
             for name, table in self.tables.items():
                 with TabPane(name):
@@ -258,6 +260,7 @@ class PanelPlots(Container):
             yield from self.plots
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
+        # TODO: add navigation/zoom to logs
         match event.button.id:
             case "plots-menu-prev":
                 if self.visible_plot_idx is None:
