@@ -262,17 +262,14 @@ class PanelPlots(Container):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         # TODO: add navigation/zoom to logs
+        if self.visible_plot_idx is None:
+            return
         match event.button.id:
             case "plots-menu-prev":
-                if self.visible_plot_idx is None:
-                    return
                 self.visible_plot_idx = max(self.visible_plot_idx - 1, 0)
             case "plots-menu-next":
-                if self.visible_plot_idx is None:
-                    return
                 self.visible_plot_idx = min(self.visible_plot_idx + 1, len(self.plots) - 1)
             case "plots-menu-zoom":
-                assert self.visible_plot_idx is not None
                 self.app.push_screen(
                     ModalOverlay(
                         Label(f"Plot {self.visible_plot_idx}"),
